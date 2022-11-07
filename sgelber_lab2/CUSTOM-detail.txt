@@ -1,0 +1,71 @@
+Lab 2 - Simon Gelber
+Titanic Dataset
+
+1. Source of Dataset: https://github.com/awesomedata/awesome-public-datasets/tree/master/Datasets
+   Creator: Thomas Cason
+
+
+2. Schemas: I decided three tables would represent the data most accurately
+
+
+Passengers: Provides all basic info on the Passengers
+PassengerID - Unique ID number representing each passenger.
+Name - Full name of passenger.
+Sex - Passenger gender: either male or female.
+Age - Number representing passenger age. Can be a decimal.
+Sibsp - Number of siblings or spouses on board.
+Parch - Number of parents or children on board.
+
+Tickets: Provides all ticket and price info
+Ticket - Ticket Number - Can be a combination of characters and numbers.
+Fare - Ticket price in British Pounds
+Cabin - Cabin Number - Can be a combination of characters and numbers.
+Embarked - Port of Embarkation: C = Cherbourg; Q = Queenstown; S = Southampton.
+Pclass - Passenger Class: 1 = 1st; 2 = 2nd; 3 = 3rd
+Name - Full name of passenger.
+PassengerID - Unique ID number representing each passenger. Maps to Passengers' PassengerID
+
+Survival: Provides casualty info
+PassengerID - Unique ID number representing each passenger. Maps to Passengers' PassengerID
+Name - Full name of passenger.
+Survived - Whether or not the passenger lived: 1 = Yes, 0 = No.
+
+I chose these schemas because I felt it separates the data into three distinct tables. Tickets and Survival are
+both linked to Passengers through PassengerID. Each Passenger can only have one PassengerID. Multiple Passengers can be
+on the same Ticket number though. (ie. families).
+
+3. Mapping Challenges:
+I initially had the ticket number in the passengers table, but this caused a dual dependency on both the passengerID
+and Ticket number. Because of this I wasn't able to drop either table because they both needed each other. I fixed this
+by removing the ticket number from Passengers and linking Tickets to Passengers through the PassengerID. In the end,
+I believe this is much cleaner anyway. I also had issues with the data having a lot of holes. It made it very difficult
+to generate the python statements cleanly. To fix this I preprocessed the data and removed any entries that had data
+holes. Since the dataset was so large, I still had plenty of table entries for the asgn.
+
+4. Three SQL Queries:
+#Sort tickets by Largest to Smallest fare.
+SELECT * FROM Tickets ORDER BY Fare DESC;
+
+#Show Passengers that survived and order them by oldest to youngest.
+SELECT Survival.PassengerId, Survival.Name, Survived, Passengers.Age FROM Survival
+LEFT JOIN Passengers ON Survival.PassengerID = Passengers.PassengerID WHERE Survived = 1 ORDER BY Age DESC;
+
+#Show Passengers that died and order them by oldest to youngest.
+SELECT Survival.PassengerId, Survival.Name, Survived, Passengers.Age FROM Survival
+ LEFT JOIN Passengers ON Survival.PassengerID = Passengers.PassengerID WHERE Survived = 0 ORDER BY Age DESC;
+
+#Show Passengers that survived and were in the 3rd class.
+SELECT Survival.PassengerID, Survival.Name, Survival.Survived, Pclass FROM Survival
+ LEFT JOIN Tickets ON Survival.PassengerID = Tickets.PassengerID WHERE Survival.Survived = 1 and Pclass = 3;
+
+#Show Passengers that survived and were in the 1st class.
+SELECT Survival.PassengerID, Survival.Name, Survival.Survived, Pclass FROM Survival
+ LEFT JOIN Tickets ON Survival.PassengerID = Tickets.PassengerID WHERE Survival.Survived = 1 and Pclass = 1;
+
+#Show a count of 1st class surviving passengers
+SELECT COUNT(Survival.PassengerID) FROM Survival LEFT JOIN Tickets ON Survival.PassengerID = Tickets.PassengerID
+ WHERE Survival.Survived = 1 and Pclass = 1;
+
+#Show a count of 3rd class surviving passengers
+SELECT COUNT(Survival.PassengerID) FROM Survival LEFT JOIN Tickets ON Survival.PassengerID = Tickets.PassengerID
+ WHERE Survival.Survived = 1 and Pclass = 3;
